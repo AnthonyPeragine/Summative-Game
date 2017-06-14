@@ -11,6 +11,9 @@ import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseWheelEvent;
+import java.awt.image.BufferedImage;
+import java.io.IOException;
+import javax.imageio.ImageIO;
 
 /**
  *
@@ -27,38 +30,53 @@ public class Game extends JComponent {
     // you just need to select an approproate framerate
     long desiredFPS = 60;
     long desiredTime = (1000) / desiredFPS;
-    //create a crosshair
+    //create 2 crosshairs
     Rectangle crosshairOut = new Rectangle(WIDTH / 2, HEIGHT / 2, 40, 40);
+    Rectangle crosshair2Out = new Rectangle(WIDTH / 2 - 40, HEIGHT / 2, 40, 40);
     Rectangle crosshairIn = new Rectangle(WIDTH / 2 + 19, HEIGHT / 2 + 19, 4, 4);
     //create a target
-    Rectangle target = new Rectangle(WIDTH / 2, HEIGHT / 2, 80, 80);
+    Rectangle target = new Rectangle(WIDTH / 2, HEIGHT / 2, 130, 130);
     //font
     Font myFont = new Font("Arial", Font.BOLD, 75);
     Font restart = new Font("Arial", Font.BOLD, 30);
-    //crosshair movement
+    //crosshair 1 movement
     boolean upPressed;
     boolean downPressed;
     boolean leftPressed;
     boolean rightPressed;
+    //crosshair 2 movement
+    boolean wPressed;
+    boolean sPressed;
+    boolean aPressed;
+    boolean dPressed;
     //target shooting
-    boolean hit;
+    boolean hit1;
+    boolean hit2;
     //play again
     boolean playAgain;
     boolean end;
     // YOUR GAME VARIABLES WOULD GO HERE
-    int score = 0;
+    int score1 = 0;
+    int score2 = 0;
     long flashDelay = 200;
-    long nextShot = 0;
+    long nextShot1 = 0;
+    long nextShot2 = 0;
     int shotDelay = 1000;
     long nextTargetMove = 0;
     long targetDelay = 300;
     int targetMove = 0;
     int targetSpeed = 1;
     long playAgainTimer = 5000;
+    int hitBoxCorrection = crosshairOut.x - 10;
+    //images
+    BufferedImage targetImage = loadImage("target.png");
+    BufferedImage crosshairImage = loadImage("Crosshair.png");
+    BufferedImage crosshair2Image = loadImage("Crosshair.png");
+    BufferedImage shootingRange = loadImage("range.jpg");
+
     // GAME VARIABLES END HERE   
     // Constructor to create the Frame and place the panel in
     // You will learn more about this in Grade 12 :)
-
     public Game() {
         // creates a windows to show my game
         JFrame frame = new JFrame(title);
@@ -93,35 +111,64 @@ public class Game extends JComponent {
         g.clearRect(0, 0, WIDTH, HEIGHT);
 
         // GAME DRAWING GOES HERE
-        g.setColor(Color.BLACK);
+        //g.setColor(Color.GRAY);
+
 
         //background
-//        g.fillRect(0, 0, WIDTH, HEIGHT);
+        g.drawImage(shootingRange, 0, 0, WIDTH, HEIGHT, null);
+        //g.fillRect(0, 0, WIDTH, HEIGHT);
 
         //target
-        g.setColor(Color.BLUE);
-        g.fillRect(target.x, target.y, target.width, target.height);
+        //g.setColor(Color.BLUE);
+        //g.fillRect(target.x - 1, target.y - 1, target.width + 1, target.height + 1);
+        g.drawImage(targetImage, target.x, target.y, target.width, target.height, null);
 
-        //crosshair
+        //crosshairs
+
+
         g.setColor(Color.RED);
+        g.fillOval(crosshairOut.x, crosshairOut.y, crosshairOut.width, crosshairOut.height);
+        g.drawImage(crosshairImage, crosshairOut.x - 20, crosshairOut.y - 20, 80, 80, null);
 
-        g.drawRect(crosshairOut.x, crosshairOut.y, crosshairOut.width, crosshairOut.height);
-        g.fillRect(crosshairIn.x, crosshairIn.y, crosshairIn.width, crosshairIn.height);
+        g.setColor(Color.BLUE);
+        g.fillOval(crosshair2Out.x, crosshair2Out.y, crosshair2Out.width, crosshair2Out.height);
+        g.drawImage(crosshair2Image, crosshair2Out.x - 20, crosshair2Out.y - 20, 80, 80, null);
 
-        //score #
+        //g.drawRect(crosshairOut.x, crosshairOut.y, crosshairOut.width, crosshairOut.height);
+        //g.fillRect(crosshairIn.x, crosshairIn.y, crosshairIn.width, crosshairIn.height);
+
+        //score1 #
         g.setFont(myFont);
 
         g.setColor(Color.RED);
 
-        g.drawString("" + score, 700, 100);
+        g.drawString("" + score1, 700, 100);
 
-        //play again message
-        if (end == true) {
-            System.out.println("test");
-            g.setFont(restart);
+        //score2 #
+        g.setFont(myFont);
+
+        g.setColor(Color.BLUE);
+
+        g.drawString("" + score2, 100, 100);
+
+
+        //winner message
+        if (score1 == 10) {
             g.setColor(Color.RED);
-            g.drawString("Press Y to play again.", 50, 50);
+            g.drawString("Red Player Wins", 130, 500);
         }
+        if (score2 == 10) {
+            g.setColor(Color.BLUE);
+            g.drawString("Blue Player Wins", 130, 500);
+        }
+        //play again message
+
+        if (end == true) {
+            g.setFont(restart);
+            g.setColor(Color.BLACK);
+            g.drawString("Press Y to play again.", 250, 50);
+        }
+
 
 
 
@@ -154,27 +201,74 @@ public class Game extends JComponent {
             // all your game rules and move is done in here
             // GAME LOGIC STARTS HERE 
 
+            //game end condition
+            if (score1 == 10 || score2 == 10) {
+                done = true;
+            }
+
+            //after game ends, chance to restart
+            while (done) {
+                if (playAgain == true) {
+                    end = false;
+
+                    score1 = 0;
+                    score2 = 0;
+                    flashDelay = 200;
+                    nextShot1 = 0;
+                    nextShot2 = 0;
+                    shotDelay = 1000;
+
+                    nextTargetMove = 0;
+                    targetDelay = 300;
+                    targetMove = 0;
+                    targetSpeed = 1;
+
+                    crosshairOut.x = WIDTH / 2;
+                    crosshairOut.y = HEIGHT / 2;
+                    crosshair2Out.x = WIDTH / 2 - 40;
+                    crosshair2Out.y = HEIGHT / 2;
+
+                    target.x = WIDTH / 2;
+                    target.y = HEIGHT / 2;
+
+                    done = false;
+
+                }
+            }
+
             //collision
             collision();
 
             if (upPressed) {
-                crosshairOut.y = crosshairOut.y - 5;
-                crosshairIn.y = crosshairIn.y - 5;
+                crosshairOut.y = crosshairOut.y - 8;
             }
 
             if (downPressed) {
-                crosshairOut.y = crosshairOut.y + 5;
-                crosshairIn.y = crosshairIn.y + 5;
+                crosshairOut.y = crosshairOut.y + 8;
             }
 
             if (leftPressed) {
-                crosshairOut.x = crosshairOut.x - 5;
-                crosshairIn.x = crosshairIn.x - 5;
+                crosshairOut.x = crosshairOut.x - 8;
             }
 
             if (rightPressed) {
-                crosshairOut.x = crosshairOut.x + 5;
-                crosshairIn.x = crosshairIn.x + 5;
+                crosshairOut.x = crosshairOut.x + 8;
+            }
+
+            if (wPressed) {
+                crosshair2Out.y = crosshair2Out.y - 8;
+            }
+
+            if (sPressed) {
+                crosshair2Out.y = crosshair2Out.y + 8;
+            }
+
+            if (aPressed) {
+                crosshair2Out.x = crosshair2Out.x - 8;
+            }
+
+            if (dPressed) {
+                crosshair2Out.x = crosshair2Out.x + 8;
             }
 
             //target random movement
@@ -235,49 +329,30 @@ public class Game extends JComponent {
             }
 
 
-            //point scoring condition
-            if (startTime >= nextShot && crosshairIn.intersects(target) && hit == true) {
-                score++;
+            //point scoring condition for player 1
+
+            if (startTime >= nextShot1 && crosshairOut.intersects(target) && hit1 == true) {
+                score1++;
                 targetSpeed = targetSpeed + 1;
-                nextShot = startTime + shotDelay;
-                nextTargetMove = nextShot;
-            } else if (!crosshairIn.intersects(target) && startTime >= nextShot && hit == true) {
-                done = true;
+                nextShot1 = startTime + shotDelay;
+            } else if (!crosshairOut.intersects(target) && hit1 == true) {
+                nextShot1 = startTime + shotDelay;
+            }
+
+            //point scoring condition for player 2
+            if (startTime >= nextShot2 && crosshair2Out.intersects(target) && hit2 == true) {
+                score2++;
+                targetSpeed = targetSpeed + 1;
+                nextShot2 = startTime + shotDelay;
+            } else if (!crosshair2Out.intersects(target) && hit2 == true) {
+                nextShot2 = startTime + shotDelay;
+            }
+
+
+
+            if (score1 == 10 || score2 == 10) {
                 end = true;
-               
-
-
             }
-
-
-            while(done) {
-                if (playAgain == true) {
-//            end = false;
-            
-            score = 0;
-            flashDelay = 200;
-            nextShot = 0;
-            shotDelay = 1000;
-
-            nextTargetMove = 0;
-            targetDelay = 300;
-            targetMove = 0;
-            targetSpeed = 1;
-
-            crosshairOut.x = WIDTH / 2;
-            crosshairOut.y = HEIGHT / 2;
-            crosshairIn.x = WIDTH / 2 + 19;
-            crosshairIn.y = HEIGHT / 2 + 19;
-
-            target.x = WIDTH / 2;
-            target.y = HEIGHT / 2;
-
-            done = false;
-
-        }
-            }
-
-
 
             // GAME LOGIC ENDS HERE 
             // update the drawing (calls paintComponent)
@@ -331,7 +406,7 @@ public class Game extends JComponent {
 
         @Override
         public void keyPressed(KeyEvent e) {
-            //moving he crosshair
+            //moving crosshair 1
             if (e.getKeyCode() == KeyEvent.VK_UP) {
                 upPressed = true;
             }
@@ -348,16 +423,36 @@ public class Game extends JComponent {
                 rightPressed = true;
             }
 
+            //moving crosshair 2
+            if (e.getKeyCode() == KeyEvent.VK_W) {
+                wPressed = true;
+            }
+
+            if (e.getKeyCode() == KeyEvent.VK_S) {
+                sPressed = true;
+            }
+
+            if (e.getKeyCode() == KeyEvent.VK_A) {
+                aPressed = true;
+            }
+
+            if (e.getKeyCode() == KeyEvent.VK_D) {
+                dPressed = true;
+            }
+
             //restart game
             if (e.getKeyCode() == KeyEvent.VK_Y) {
                 playAgain = true;
-                 
+
             }
 
 
-            //shooting with spacebar
-            if (e.getKeyCode() == KeyEvent.VK_SPACE) {
-                hit = true;
+            //shooting for both players
+            if (e.getKeyCode() == KeyEvent.VK_COMMA) {
+                hit1 = true;
+            }
+            if (e.getKeyCode() == KeyEvent.VK_CONTROL) {
+                hit2 = true;
             }
         }
 
@@ -365,7 +460,7 @@ public class Game extends JComponent {
         @Override
         public void keyReleased(KeyEvent e) {
 
-            //moving the crosshair
+            //moving crosshair 1
             if (e.getKeyCode() == KeyEvent.VK_UP) {
                 upPressed = false;
             }
@@ -382,9 +477,30 @@ public class Game extends JComponent {
                 rightPressed = false;
             }
 
-            //shooting with spacebar
-            if (e.getKeyCode() == KeyEvent.VK_SPACE) {
-                hit = false;
+            //moving crosshair 2
+            if (e.getKeyCode() == KeyEvent.VK_W) {
+                wPressed = false;
+            }
+
+            if (e.getKeyCode() == KeyEvent.VK_S) {
+                sPressed = false;
+            }
+
+            if (e.getKeyCode() == KeyEvent.VK_A) {
+                aPressed = false;
+            }
+
+            if (e.getKeyCode() == KeyEvent.VK_D) {
+                dPressed = false;
+            }
+
+            //shooting for both players
+            if (e.getKeyCode() == KeyEvent.VK_COMMA) {
+                hit1 = false;
+            }
+
+            if (e.getKeyCode() == KeyEvent.VK_CONTROL) {
+                hit2 = false;
             }
 
             //restart game
@@ -406,24 +522,38 @@ public class Game extends JComponent {
     }
 
     public void collision() {
+        //crosshair 1 movement collision at border of screen
         if (crosshairOut.y <= 0) {
             crosshairOut.y = 0;
-            crosshairIn.y = crosshairOut.height / 2;
         }
 
         if (crosshairOut.y + crosshairOut.height >= HEIGHT) {
             crosshairOut.y = HEIGHT - crosshairOut.height;
-            crosshairIn.y = HEIGHT - crosshairOut.height / 2;
         }
 
         if (crosshairOut.x <= 0) {
             crosshairOut.x = 0;
-            crosshairIn.x = crosshairOut.width / 2;
         }
 
         if (crosshairOut.x + crosshairOut.width >= WIDTH) {
             crosshairOut.x = WIDTH - crosshairOut.width;
-            crosshairIn.x = WIDTH - crosshairOut.width / 2;
+        }
+
+        //crosshair 2 movement collision at border of screen
+        if (crosshair2Out.y <= 0) {
+            crosshair2Out.y = 0;
+        }
+
+        if (crosshair2Out.y + crosshair2Out.height >= HEIGHT) {
+            crosshair2Out.y = HEIGHT - crosshair2Out.height;
+        }
+
+        if (crosshair2Out.x <= 0) {
+            crosshair2Out.x = 0;
+        }
+
+        if (crosshair2Out.x + crosshair2Out.width >= WIDTH) {
+            crosshair2Out.x = WIDTH - crosshair2Out.width;
         }
 
         if (target.x <= 0) {
@@ -444,7 +574,21 @@ public class Game extends JComponent {
 
     }
 
-    
-        
-    
+    // A method used to load in an image
+    // The filname is used to pass in the EXACT full name of the image from the src folder
+    // i.e.  images/picture.png
+    public BufferedImage loadImage(String filename) {
+
+        BufferedImage img = null;
+
+        try {
+            // use ImageIO to load in an Image
+            // ClassLoader is used to go into a folder in the directory and grab the file
+            img = ImageIO.read(ClassLoader.getSystemResourceAsStream(filename));
+        } catch (IOException ex) {
+            System.err.println(ex.getMessage());
+        }
+
+        return img;
+    }
 }

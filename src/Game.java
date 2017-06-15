@@ -1,9 +1,9 @@
 
+import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Graphics;
 import javax.swing.JComponent;
 import javax.swing.JFrame;
-import java.awt.Color;
 import java.awt.Font;
 import java.awt.Rectangle;
 import java.awt.event.KeyAdapter;
@@ -144,6 +144,9 @@ public class Game extends JComponent {
 
         g.drawString("" + score1, 700, 100);
 
+        g.setFont(restart);
+
+
         //score2 #
         g.setFont(myFont);
 
@@ -151,8 +154,26 @@ public class Game extends JComponent {
 
         g.drawString("" + score2, 100, 100);
 
+        g.setFont(restart);
+
+        if(score1 == 0 && score2 == 0){
+
+            //blue player controls
+            g.setColor(Color.BLUE);
+            g.drawString("W A S D to move", 50, 200);
+            g.drawString("CTRL to shoot", 50, 230);
+
+            //red player controls
+            g.setColor(Color.RED);
+            g.drawString("Up down left right to move", 410, 200);
+            g.drawString("Comma to shoot", 500, 230);
+
+        }
+        
 
         //winner message
+        g.setFont(myFont);
+        
         if (score1 == 10) {
             g.setColor(Color.RED);
             g.drawString("Red Player Wins", 130, 500);
@@ -238,7 +259,6 @@ public class Game extends JComponent {
 
             //collision
             collision();
-
             if (upPressed) {
                 crosshairOut.y = crosshairOut.y - 8;
             }
